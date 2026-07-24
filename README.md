@@ -1,21 +1,7 @@
 # NixOs-Config
 My NixOs Configuration and note to quickly bootstrap my dev environnement
 
-## Enable flakes
-
-Add this to your `/etc/nix/configuration.nix`
-```nix
-    # /etc/nix/configuration.nix
-    # ....
-    
-    imports = [
-      # ...
-      ./system-customisation.nix
-    ];
-    
-    #...
+## Bootstrap the flake : 
 ```
-
-Copy the `system-customisation.nix` file in this repository to your `/etc/nix/` directory.
-
-## Enable home-manager:
+sudo nix --extra-experimental-features nix-command --extra-experimental-features flakes  flake init
+```
