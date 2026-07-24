@@ -20,6 +20,7 @@ nixos-wsl= { url = "github:nix-community/NixOS-WSL/main";
           {
             system.stateVersion = "26.05";
             wsl.enable = true;
+             wsl.defaultUser = "pierre";
           }
         ];
       };
