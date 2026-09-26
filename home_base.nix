@@ -36,6 +36,7 @@
       lazyssh
       github-copilot-cli
 
+      nil
       up
       nixfmt
       nh
