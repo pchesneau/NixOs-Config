@@ -7,6 +7,7 @@
       pkg:
       builtins.elem (lib.getName pkg) [
         "idea"
+        "intellij-idea"
         "intellij-idea-with-plugins"
         "idea-with-plugins"
         "github-copilot-cli"
