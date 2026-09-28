@@ -48,7 +48,7 @@
               {
                 security.pki.certificateFiles =
                   nixpkgs.lib.mkIf (builtins.pathExists "${inputs.user-provided-config}/additional-trusts.crt")
-                    [ "${inputs.user-provided-configg}/additional-trusts.crt" ];
+                    [ "${inputs.user-provided-config}/additional-trusts.crt" ];
               }
               ./wsl-base-config.nix
               ./system-customisation.nix
