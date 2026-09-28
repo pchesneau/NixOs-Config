@@ -28,6 +28,5 @@
     # login shell. This does not change anyone's shell on its own:
     # users.defaultUserShell stays bash, only pierre is switched to zsh.
     programs.zsh.enable = true;
-    users.users.pierre.shell = pkgs.zsh;
   };
 }

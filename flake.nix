@@ -55,6 +55,11 @@
               {
                 wsl.defaultUser = mainUserConfig.username;
               }
+              ({ lib, pkgs, ... }: {
+                config = {
+                  users.users."${mainUserConfig.username}".shell = pkgs.zsh;
+                };
+              })
               home-manager.nixosModules.home-manager
               {
                 home-manager.useGlobalPkgs = true;
