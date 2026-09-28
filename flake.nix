@@ -58,6 +58,7 @@
               home-manager.nixosModules.home-manager
               {
                 home-manager.useGlobalPkgs = true;
+                home-manager.backupFileExtension = ".home-manager-overrided";
                 home-manager.useUserPackages = true;
                 home-manager.extraSpecialArgs = { inherit inputs; };
                 home-manager.users."${mainUserConfig.username}" = import ./home_base.nix mainUserConfig;

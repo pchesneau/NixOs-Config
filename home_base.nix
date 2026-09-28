@@ -60,6 +60,8 @@
   programs.zellij = {
     enable = true;
     enableZshIntegration = true;
+    extraConfig = ''default_mode "locked"'';
+    attachExistingSession = true;
   };
   programs.home-manager.enable = true;
 
