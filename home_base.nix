@@ -113,9 +113,7 @@
     autosuggestion.enable = true;
     syntaxHighlighting.enable = true;
     enableCompletion = true;
-    initExtra = ''
-      # No --info-right: the loaded packages are rendered by the Starship
-      # `custom.nix_shell` module in the left prompt instead.
+    initContent = ''
       any-nix-shell zsh | source /dev/stdin
     '';
 
