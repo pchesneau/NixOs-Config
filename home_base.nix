@@ -61,7 +61,11 @@
   programs.zellij = {
     enable = true;
     enableZshIntegration = true;
-    extraConfig = ''default_mode "locked"'';
+    settings = {
+
+      default_mode = "locked";
+      theme = "catppuccin-mocha";
+    };
     attachExistingSession = true;
   };
   programs.home-manager.enable = true;
