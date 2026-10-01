@@ -171,7 +171,7 @@
         disabled = false;
         format = " in $duration ";
         min_time_to_notify = 45000;
-        show_milliseconds = true;
+        show_milliseconds = false;
         show_notifications = true;
         style = "bg:lavender";
       };
@@ -208,6 +208,7 @@
           Pictures = " ";
         };
         truncation_length = 3;
+        fish_style_pwd_dir_length = 1;
         truncation_symbol = "…/";
       };
       docker_context = {
