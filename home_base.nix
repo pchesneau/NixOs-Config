@@ -45,7 +45,6 @@
       ripgrep
       fd
       bat
-      eza
     ]
     ++ [
       # Adds the latest IDEA version with the latest compatible version of "com.intellij.plugins.watcher".
@@ -70,6 +69,21 @@
   };
   programs.home-manager.enable = true;
 
+  # Modern replacement for `ls`, managed declaratively instead of via raw
+  # package + manual shellAliases. Provides ls/ll/la/lt aliases itself.
+  programs.eza = {
+    enable = true;
+    enableZshIntegration = true;
+    git = true;
+    icons = "auto";
+  };
+
+  # Smarter `cd`: tracks visited directories and jumps via frecency (`z foo`).
+  programs.zoxide = {
+    enable = true;
+    enableZshIntegration = true;
+  };
+
   # Migrated from old/.gitconfig. Installs git into this user's profile only.
   programs.git = {
     enable = true;
@@ -80,6 +94,12 @@
       core.autocrlf = "input";
       push.autoSetupRemote = true;
     };
+  };
+
+  # Syntax-highlighted, side-by-side diffs as git's pager (diff/log/show/blame).
+  programs.delta = {
+    enable = true;
+    enableGitIntegration = true;
   };
 
   programs.keychain = {
@@ -134,11 +154,8 @@
 
     };
 
+    # ls/ll/la/lt aliases are provided by programs.eza (git integration on).
     shellAliases = {
-      ls = "eza";
-      ll = "eza -l --git";
-      la = "eza -la --git";
-      lt = "eza --tree --level=2";
       cat = "bat --paging=never";
       ".." = "cd ..";
       "..." = "cd ../..";

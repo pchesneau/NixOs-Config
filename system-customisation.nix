@@ -24,6 +24,20 @@
       "nix-command"
       "flakes"
     ];
+
+    # Keep /nix/store from growing unbounded: weekly GC of old generations
+    # plus store optimisation (hardlinking identical files) on a schedule,
+    # which matters most on WSL's size-capped virtual disk.
+    nix.gc = {
+      automatic = true;
+      dates = "weekly";
+      options = "--delete-older-than 14d";
+    };
+    nix.optimise = {
+      automatic = true;
+      dates = [ "weekly" ];
+    };
+
     # Enables zsh support (/etc/shells, /etc/zshenv) so it is a usable
     # login shell. This does not change anyone's shell on its own:
     # users.defaultUserShell stays bash, only pierre is switched to zsh.
