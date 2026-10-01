@@ -12,7 +12,7 @@ This project bootstraps and manages a fully-configured developer environment on 
 - **Home Manager Integration**: Declaratively manages user profiles, dotfiles, and user packages.
 - **Modern Shell & Terminal**:
   - **Zsh** with Oh-My-Zsh plugins (`git`, `ssh`, `kubectl`, `azure`, `terraform`, `kubectx`, `helm`, `ansible`).
-  - **Starship Prompt**: Custom Catppuccin Mocha powerline theme with JetBrains Mono Nerd Font glyphs.
+  - **Starship Prompt**: Custom Catppuccin Mocha powerline theme with JetBrains Mono Nerd Font glyphs. Inside a `nix-shell` / `nix develop` / `nix run`, the loaded packages are shown (via `any-nix-shell`) right before the prompt character.
   - **Zellij**: Modern terminal multiplexer pre-configured with Zsh integration.
   - **Modern CLI Replacements**: `eza` (for `ls`), `bat` (for `cat`), `ripgrep` (`rg`), `fd`, `fzf`, `jq`, `up`, `lazyssh`.
 - **Development & IDE**:

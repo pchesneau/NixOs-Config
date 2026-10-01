@@ -35,6 +35,7 @@
       kubectl
       lazyssh
       github-copilot-cli
+      any-nix-shell
 
       up
       nixfmt
@@ -88,6 +89,12 @@
     autosuggestion.enable = true;
     syntaxHighlighting.enable = true;
     enableCompletion = true;
+    initExtra = ''
+        # No --info-right: the loaded packages are rendered by the Starship
+        # `custom.nix_shell` module in the left prompt instead.
+        any-nix-shell zsh | source /dev/stdin
+    '';
+
 
     history = {
       size = 50000;
@@ -175,6 +182,20 @@
         style = "fg:crust bg:sapphire";
         symbol = "  ";
       };
+      custom = {
+        # Shows the packages brought in by the surrounding `nix-shell` / `nix
+        # develop` / `nix run` environment, right before the prompt character.
+        # `nix-shell-info` comes from any-nix-shell and prints nothing outside
+        # such an environment; it hardcodes a bold-green ANSI escape, so the
+        # codes are stripped to let the palette below drive the color.
+        nix_shell = {
+          command = ''nix-shell-info | sed -E "s/\x1B\[[0-9;]*[mK]//g"'';
+          description = "Packages loaded in the current nix-shell";
+          format = "[❄ $output ]($style)";
+          style = "bold fg:mauve";
+          when = ''[ -n "$IN_NIX_SHELL" ] || [ -n "$IN_NIX_RUN" ]'';
+        };
+      };
       directory = {
         format = "[ $path ]($style)";
         style = "bg:peach fg:crust";
@@ -193,7 +214,7 @@
         style = "bg:sapphire";
         symbol = "";
       };
-      format = "[](red)$os$username[](bg:peach fg:red)$directory[](bg:yellow fg:peach)$git_branch$git_status[](fg:yellow bg:green)$c$rust$golang$nodejs$php$java$kotlin$haskell$python[](fg:green bg:sapphire)$conda[](fg:sapphire bg:lavender)$time[ ](fg:lavender)$cmd_duration$line_break$character";
+      format = "[](red)$os$username[](bg:peach fg:red)$directory[](bg:yellow fg:peach)$git_branch$git_status[](fg:yellow bg:green)$c$rust$golang$nodejs$php$java$kotlin$haskell$python[](fg:green bg:sapphire)$conda[](fg:sapphire bg:lavender)$time[ ](fg:lavender)$cmd_duration$line_break\${custom.nix_shell}$character";
       git_branch = {
         format = "[[ $symbol $branch ](fg:crust bg:yellow)]($style)";
         style = "bg:yellow";
