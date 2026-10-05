@@ -115,6 +115,7 @@
     enableCompletion = true;
     initContent = ''
       any-nix-shell zsh | source /dev/stdin
+      export GIT_AUTO_FETCH_INTERVAL=120 # in seconds
     '';
 
     history = {
@@ -148,6 +149,7 @@
         "kubectx"
         "helm"
         "ansible"
+        "git-auto-fetch"
       ];
 
     };
