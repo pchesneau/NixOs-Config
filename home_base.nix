@@ -37,6 +37,7 @@
       github-copilot-cli
       any-nix-shell
 
+      nom
       up
       nixfmt
       nh
