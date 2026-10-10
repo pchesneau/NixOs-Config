@@ -221,23 +221,27 @@
       directory = {
         format = "[ $path ]($style)";
         style = "bg:peach fg:crust";
-        substitutions = {
-          Developer = "󰲋 ";
-          Documents = "󰈙 ";
-          Downloads = " ";
-          Music = "󰝚 ";
-          Pictures = " ";
-        };
-        truncation_length = 3;
+        # Fish-style: no fixed truncation cutoff, every ancestor directory is
+        # abbreviated to its first character and only the final component is
+        # shown in full.
+        truncation_length = 1;
         fish_style_pwd_dir_length = 1;
         truncation_symbol = "…/";
       };
-      docker_context = {
-        format = "[[ $symbol( $context) ](fg:crust bg:sapphire)]($style)";
-        style = "bg:sapphire";
-        symbol = "";
+      hostname = {
+        # Only rendered over SSH, so local shells stay uncluttered but a
+        # remote session always makes the host obvious.
+        ssh_only = true;
+        format = "[@$hostname ](bg:red fg:crust)";
+        disabled = false;
       };
-      format = "[](red)$os$username[](bg:peach fg:red)$directory[](bg:yellow fg:peach)$git_branch$git_status[](fg:yellow bg:green)$c$rust$golang$nodejs$php$java$kotlin$haskell$python[](fg:green bg:sapphire)$conda[](fg:sapphire bg:lavender)$time[ ](fg:lavender)$cmd_duration$line_break\$nix_shell\${custom.nix_shell}$character";
+      kubernetes = {
+        disabled = false;
+        format = "[[ $symbol$context( \($namespace\)) ](fg:crust bg:sapphire)]($style)";
+        style = "bg:sapphire";
+        symbol = "☸ ";
+      };
+      format = "[](red)$os$username$hostname[](bg:peach fg:red)$directory[](bg:yellow fg:peach)$git_branch$git_status[](fg:yellow bg:green)$c$rust$golang$nodejs$php$java$kotlin$haskell$python[](fg:green bg:sapphire)$conda$kubernetes[](fg:sapphire bg:lavender)$time[ ](fg:lavender)$cmd_duration$line_break\$nix_shell\${custom.nix_shell}$character";
       git_branch = {
         format = "[[ $symbol $branch ](fg:crust bg:yellow)]($style)";
         style = "bg:yellow";
