@@ -1,32 +1,20 @@
-# Reusable base home profile.
-#
-# This file is a function of the user's identity: apply it to an attribute set
-# to get a Home Manager module.
-{
-  username,
-  gitUserName,
-  gitUserEmail,
-  ...
-}:
-
+# Reusable base home profile. The user's name and git identity come from
+# flake.nix (/etc/nixos-config/mainUser.nix), as do the modules of the
+# `catppuccin`, `lazyvim` and `revim` options.
 {
   config,
   lib,
   pkgs,
-  inputs,
   ...
 }:
 
 {
-  imports = [ inputs.lazyvim.homeManagerModules.default ];
-
-  home.username = username;
-  home.homeDirectory = "/home/${username}";
+  imports = [ ./revim.nix ];
 
   # Keep in sync with the release Home Manager was installed from.
   home.stateVersion = "26.05";
 
-  # User-scoped packages only (installed into /etc/profiles/per-user/${username}).
+  # User-scoped packages only (installed into /etc/profiles/per-user/<user>).
   home.packages =
     with pkgs;
     [
@@ -48,10 +36,11 @@
       ripgrep
       fd
       bat
+      claude-code
     ]
     ++ [
       # Adds the latest IDEA version with the latest compatible version of "com.intellij.plugins.watcher".
-      (inputs.nix-jetbrains-plugins.lib.buildIdeWithPlugins pkgs "idea" [
+      (pkgs.buildIdeWithPlugins "idea" [
         "com.intellij.plugins.watcher"
         "org.jetbrains.junie"
         "com.intellij.mcpServer"
@@ -104,14 +93,13 @@
 
   programs.zellij = {
     enable = true;
-    enableZshIntegration = true;
+    # Auto-started from programs.zsh.initContent instead, with a stricter guard.
+    enableZshIntegration = false;
     plugins = with pkgs.zellijPlugins; [ autolock ];
     settings = {
 
-      theme = "catppuccin-mocha";
       show_startup_tips = false;
     };
-    attachExistingSession = true;
   };
   programs.home-manager.enable = true;
 
@@ -131,12 +119,10 @@
   };
 
   # Migrated from old/.gitconfig. Installs git into this user's profile only.
+  # `user.name` and `user.email` are set by flake.nix.
   programs.git = {
     enable = true;
     settings = {
-      user.name = gitUserName;
-      user.email = gitUserEmail;
-
       core.autocrlf = "input";
       push.autoSetupRemote = true;
       pull.rebase = true;
@@ -160,10 +146,26 @@
     autosuggestion.enable = true;
     syntaxHighlighting.enable = true;
     enableCompletion = true;
-    initContent = ''
-      any-nix-shell zsh | source /dev/stdin
-      export GIT_AUTO_FETCH_INTERVAL=120 # in seconds
-    '';
+    initContent = lib.mkMerge [
+      # Starts zellij, or attaches to its running session, in each terminal.
+      # Replaces programs.zellij.enableZshIntegration (+ attachExistingSession),
+      # whose guard only skips TERM=dumb: with systemd, WSL also opens a hidden
+      # `login` session at boot, an interactive zsh on a pty nobody reads, with
+      # an empty TERM and none of the WSL/WSLg variables. When it won the race
+      # it started the zellij server, and every pane inherited its empty TERM:
+      # zsh could no longer move the cursor back, so each repaint (syntax
+      # highlighting, autosuggestions) was appended after the line instead of
+      # overwriting it, and one keystroke showed up as many letters.
+      (lib.mkOrder 200 ''
+        if [[ -z "$ZELLIJ" && -n "$TERM" && "$TERM" != dumb ]]; then
+          ${lib.getExe config.programs.zellij.finalPackage} attach -c
+        fi
+      '')
+      ''
+        any-nix-shell zsh | source /dev/stdin
+        export GIT_AUTO_FETCH_INTERVAL=120 # in seconds
+      ''
+    ];
 
     history = {
       size = 50000;
@@ -214,9 +216,10 @@
     enable = true;
     enableZshIntegration = true;
 
-    # Migrated from old/starship.toml (Catppuccin Mocha powerline prompt).
-    # Home Manager renders this back out to ~/.config/starship.toml, so this
-    # attribute set is now the single source of truth.
+    # Migrated from old/starship.toml (Catppuccin powerline prompt; the palette
+    # comes from `catppuccin.starship` below). Home Manager renders this back
+    # out to ~/.config/starship.toml, so this attribute set is now the single
+    # source of truth.
     #
     # Note: the many module `symbol` values are Nerd Font glyphs from the
     # Private Use Area; they render as boxes without a patched font.
@@ -391,121 +394,6 @@
           Windows = "";
         };
       };
-      palette = "catppuccin_mocha";
-      palettes = {
-        catppuccin_frappe = {
-          base = "#303446";
-          blue = "#8caaee";
-          crust = "#232634";
-          flamingo = "#eebebe";
-          green = "#a6d189";
-          lavender = "#babbf1";
-          mantle = "#292c3c";
-          maroon = "#ea999c";
-          mauve = "#ca9ee6";
-          overlay0 = "#737994";
-          overlay1 = "#838ba7";
-          overlay2 = "#949cbb";
-          peach = "#ef9f76";
-          pink = "#f4b8e4";
-          red = "#e78284";
-          rosewater = "#f2d5cf";
-          sapphire = "#85c1dc";
-          sky = "#99d1db";
-          subtext0 = "#a5adce";
-          subtext1 = "#b5bfe2";
-          surface0 = "#414559";
-          surface1 = "#51576d";
-          surface2 = "#626880";
-          teal = "#81c8be";
-          text = "#c6d0f5";
-          yellow = "#e5c890";
-        };
-        catppuccin_latte = {
-          base = "#eff1f5";
-          blue = "#1e66f5";
-          crust = "#dce0e8";
-          flamingo = "#dd7878";
-          green = "#40a02b";
-          lavender = "#7287fd";
-          mantle = "#e6e9ef";
-          maroon = "#e64553";
-          mauve = "#8839ef";
-          overlay0 = "#9ca0b0";
-          overlay1 = "#8c8fa1";
-          overlay2 = "#7c7f93";
-          peach = "#fe640b";
-          pink = "#ea76cb";
-          red = "#d20f39";
-          rosewater = "#dc8a78";
-          sapphire = "#209fb5";
-          sky = "#04a5e5";
-          subtext0 = "#6c6f85";
-          subtext1 = "#5c5f77";
-          surface0 = "#ccd0da";
-          surface1 = "#bcc0cc";
-          surface2 = "#acb0be";
-          teal = "#179299";
-          text = "#4c4f69";
-          yellow = "#df8e1d";
-        };
-        catppuccin_macchiato = {
-          base = "#24273a";
-          blue = "#8aadf4";
-          crust = "#181926";
-          flamingo = "#f0c6c6";
-          green = "#a6da95";
-          lavender = "#b7bdf8";
-          mantle = "#1e2030";
-          maroon = "#ee99a0";
-          mauve = "#c6a0f6";
-          overlay0 = "#6e738d";
-          overlay1 = "#8087a2";
-          overlay2 = "#939ab7";
-          peach = "#f5a97f";
-          pink = "#f5bde6";
-          red = "#ed8796";
-          rosewater = "#f4dbd6";
-          sapphire = "#7dc4e4";
-          sky = "#91d7e3";
-          subtext0 = "#a5adcb";
-          subtext1 = "#b8c0e0";
-          surface0 = "#363a4f";
-          surface1 = "#494d64";
-          surface2 = "#5b6078";
-          teal = "#8bd5ca";
-          text = "#cad3f5";
-          yellow = "#eed49f";
-        };
-        catppuccin_mocha = {
-          base = "#1e1e2e";
-          blue = "#89b4fa";
-          crust = "#11111b";
-          flamingo = "#f2cdcd";
-          green = "#a6e3a1";
-          lavender = "#b4befe";
-          mantle = "#181825";
-          maroon = "#eba0ac";
-          mauve = "#cba6f7";
-          overlay0 = "#6c7086";
-          overlay1 = "#7f849c";
-          overlay2 = "#9399b2";
-          peach = "#fab387";
-          pink = "#f5c2e7";
-          red = "#f38ba8";
-          rosewater = "#f5e0dc";
-          sapphire = "#74c7ec";
-          sky = "#89dceb";
-          subtext0 = "#a6adc8";
-          subtext1 = "#bac2de";
-          surface0 = "#313244";
-          surface1 = "#45475a";
-          surface2 = "#585b70";
-          teal = "#94e2d5";
-          text = "#cdd6f4";
-          yellow = "#f9e2af";
-        };
-      };
       php = {
         format = "[[ $symbol( $version) ](fg:crust bg:green)]($style)";
         style = "bg:green";
@@ -555,5 +443,16 @@
 
   home.sessionVariables = {
     EDITOR = "nvim";
+  };
+
+  # The theme of the home (catppuccin/nix), for the programs that opt in below.
+  # revim (./revim.nix) follows it too.
+  catppuccin = {
+    enable = true;
+    autoEnable = false;
+    flavor = "mocha";
+    accent = "mauve";
+    starship.enable = true;
+    zellij.enable = true;
   };
 }

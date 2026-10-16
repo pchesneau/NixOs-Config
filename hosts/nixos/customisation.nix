@@ -1,11 +1,13 @@
 { lib, pkgs, ... }: {
 
   config = {
-    # home-manager.useGlobalPkgs = true below means Home Manager reuses
-    # this very nixpkgs instance.
+    # home-manager.useGlobalPkgs = true (default.nix) means Home Manager
+    # reuses this very nixpkgs instance.
     nixpkgs.config.allowUnfreePredicate =
       pkg:
       builtins.elem (lib.getName pkg) [
+        "barbar.nvim" # revim's file tabs
+        "claude-code"
         "idea"
         "intellij-idea"
         "intellij-idea-with-plugins"
