@@ -1,43 +1,45 @@
 {
+  description = "NixOS on WSL for development, built on the nixos-roles modules";
+
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
 
-    opinionated = {
-      url = "github:pchesneau/NixOs-Opinionated";
+    flake-parts = {
+      url = "github:hercules-ci/flake-parts";
+      inputs.nixpkgs-lib.follows = "nixpkgs";
+    };
+
+    import-tree.url = "github:denful/import-tree";
+
+    # The NixOS and Home Manager modules this configuration is built on: the
+    # WSL platform, the roles and their defaults.
+    nixos-roles = {
+      url = "github:maximeq95/NixOs-Opinionated/refactor/dendritic";
+      inputs = {
+        nixpkgs.follows = "nixpkgs";
+        flake-parts.follows = "flake-parts";
+        import-tree.follows = "import-tree";
+      };
+    };
+
+    # The theme of the home (`catppuccin.flavor` / `catppuccin.accent`).
+    catppuccin = {
+      url = "github:catppuccin/nix";
       inputs.nixpkgs.follows = "nixpkgs";
+    };
+
+    # revim: Neovim (nixvim) and a yazi + zellij IDE around it. Its overlay adds
+    # `pkgs.revim`, its Home Manager module `programs.revim`.
+    revim = {
+      url = "github:maximeq95/revim";
+      inputs = {
+        nixpkgs.follows = "nixpkgs";
+        home-manager.follows = "nixos-roles/home-manager";
+      };
     };
   };
 
-  outputs =
-    { nixpkgs, opinionated, ... }:
-    let
-      # Machine-specific and git-ignored: only visible when the flake is
-      # referenced as `path:/etc/nixos`, which makes Nix copy untracked files.
-      mainUserFile = ./. + "/mainUser.nix";
-      additionalTrusts = ./. + "/additional-trusts.crt";
-
-      mainUser =
-        if builtins.pathExists mainUserFile then
-          import mainUserFile
-        else
-          throw ''
-            /etc/nixos/mainUser.nix not found. Create it from exemple_profile.nix,
-            then build with `nh os switch` or
-            `nixos-rebuild switch --flake path:/etc/nixos#nixos`
-            (a plain /etc/nixos reference ignores git-ignored files).
-          '';
-    in
-    {
-      nixosConfigurations.nixos = nixpkgs.lib.nixosSystem {
-        system = "x86_64-linux";
-        specialArgs = {
-          inherit mainUser;
-          additionalTrusts = if builtins.pathExists additionalTrusts then additionalTrusts else null;
-        };
-        modules = [
-          opinionated.nixosModules.wsl
-          ./configuration.nix
-        ];
-      };
-    };
+  # Dendritic layout: every file under ./modules is a flake-parts module,
+  # imported automatically (paths containing `/_` are skipped). See README.md.
+  outputs = inputs: inputs.flake-parts.lib.mkFlake { inherit inputs; } (inputs.import-tree ./modules);
 }

@@ -4,7 +4,7 @@ A reproducible, declarative NixOS configuration for WSL (Windows Subsystem for L
 
 This project bootstraps and manages a fully-configured developer environment on Windows WSL, complete with modern CLI utilities, shell optimizations, cloud/DevOps tooling, and declarative IDE configurations.
 
-All the configuration logic lives in the [`NixOs-Opinionated`](https://github.com/pchesneau/NixOs-Opinionated) modules (input `opinionated`); this repository only enables them and declares the main user with the `base`, `ops`, `dev` and `llm` roles. See that repository's README for every available option and role.
+Most of the configuration comes from the [`NixOs-Opinionated`](https://github.com/pchesneau/NixOs-Opinionated) modules (input `nixos-roles`): the WSL platform and the `base`, `ops`, `dev` and `llm` roles. This repository picks them for the main user and adds its own features on top: the revim editor, the Catppuccin theme, Claude Code. See that repository's README for every available option and role.
 
 ---
 
@@ -13,17 +13,17 @@ All the configuration logic lives in the [`NixOs-Opinionated`](https://github.co
 - **Declarative NixOS on WSL**: Leverages [`NixOS-WSL`](https://github.com/nix-community/NixOS-WSL) for lightweight, high-performance Linux on Windows without the overhead of standard virtualization.
 - **Home Manager Integration**: Declaratively manages user profiles, dotfiles, and user packages.
 - **Modern Shell & Terminal**:
-  - **Zsh** with Oh-My-Zsh plugins (`git`, `ssh`, `kubectl`, `terraform`, `kubectx`, `helm`, `ansible`).
-  - **Starship Prompt**: Custom Catppuccin Mocha powerline theme with JetBrains Mono Nerd Font glyphs. Inside a `nix-shell` / `nix develop` / `nix run`, the loaded packages are shown (via `any-nix-shell`) right before the prompt character, next to a `direnv` indicator reporting whether the directory's `.envrc` is allowed and loaded.
-  - **Zellij**: Modern terminal multiplexer pre-configured with Zsh integration.
+  - **Zsh** with Oh-My-Zsh plugins (`git`, `ssh`, `kubectl`, `azure`, `terraform`, `kubectx`, `helm`, `ansible`).
+  - **Starship Prompt**: Powerline prompt themed by [catppuccin/nix](https://github.com/catppuccin/nix) (Mocha). Inside a `nix-shell` / `nix develop` / `nix run`, the loaded packages are shown (via `any-nix-shell`) right before the prompt character, next to a `direnv` indicator.
+  - **Zellij**: Terminal multiplexer, started (or attached to) by every terminal's zsh.
   - **direnv + nix-direnv**: Per-directory environments loaded on `cd`, with the built shell cached and kept alive as a GC root so re-entering a project is instant.
   - **Modern CLI Replacements**: `eza` (for `ls`), `bat` (for `cat`), `ripgrep` (`rg`), `fd`, `fzf`, `jq`, `up`, `lazyssh`.
 - **Development & IDE**:
-  - **LazyVim**: Neovim configured through the [`pfassina/lazyvim-nix`](https://github.com/pfassina/lazyvim-nix) Home Manager module, with the `lang.{nix,python,java,json,yaml,terraform,markdown}` extras enabled. `nvim` is the default `$EDITOR`, aliased to `vi`/`vim`.
-  - **IntelliJ IDEA**: Declaratively provisioned with custom plugins via `nix-jetbrains-plugins` (File Watcher, Junie, MCP Server, ML LLM, ACP).
-  - **GitHub Copilot CLI** & development toolchains.
+  - **revim**: [Neovim (nixvim) and a yazi + zellij IDE around it](https://github.com/maximeq95/revim), the default `$EDITOR`, also reachable as `vi` / `vim`.
+  - **IntelliJ IDEA**: Declaratively provisioned with plugins via `nix-jetbrains-plugins` (File Watcher, Junie, MCP Server, ML LLM, ACP, Air).
+  - **Claude Code** and **GitHub Copilot CLI**.
   - **Nix Tooling**: `nixfmt` code formatter and `nh` helper.
-- **Cloud & DevOps Ready**: Preloaded with `kubectl`, `helm`, `fluxcd`, `terraform`, and `ansible`. Azure CLI is available through `home-manager.users.<name>.opinionated.roles.ops.azure.enable`.
+- **Cloud & DevOps Ready**: Preloaded with `kubectl`, `helm`, `fluxcd`, `terraform`, `ansible` and the Azure CLI.
 - **Automatic Store Cleanup**: `nh clean` removes generations older than 14 days and the store is optimised, weekly.
 - **Machine-Specific Configuration**: User identity and corporate root certificates are git-ignored files next to the flake, so `flake.lock` is committed and shared between machines.
 
@@ -31,11 +31,23 @@ All the configuration logic lives in the [`NixOs-Opinionated`](https://github.co
 
 ## 📁 Repository Structure
 
-| File | Purpose |
+The flake follows the [dendritic pattern](https://github.com/mightyiam/dendritic): every file under `modules/` is a [flake-parts](https://flake.parts) module, imported by [import-tree](https://github.com/denful/import-tree), and holds one feature. A feature contributes NixOS or Home Manager modules to `flake.modules.<class>.<name>`; importing one of them enables the feature.
+
+| Path | Purpose |
 | :--- | :--- |
-| `flake.nix` | Flake entry point: inputs (`nixpkgs`, `opinionated`) and the `nixos` system, built with the git-ignored `mainUser.nix` and `additional-trusts.crt`. |
-| `configuration.nix` | Host settings: state version, enabled opinionated modules, main user and its roles, additional certificates. |
-| `exemple_profile.nix` | Example profile template for defining user identity (`username`, `gitUserName`, `gitUserEmail`). |
+| `flake.nix` | Inputs, and `import-tree ./modules`. |
+| `modules/hosts/workstation.nix` | The host (`nixosConfigurations.nixos`): the WSL platform of `nixos-roles`, the certificates, the main user, `overlays.default`. |
+| `modules/users/main-user.nix` | The main user: their roles (NixOS), their git identity and the Home Manager features they import. |
+| `modules/machine/` | `machine.mainUser` and `machine.additionalTrusts`, read from the git-ignored files; the certificates. |
+| `modules/editor/revim.nix` | revim in place of LazyVim, and its overlay. |
+| `modules/theme/catppuccin.nix` | The Catppuccin theme (Starship, Zellij, revim). |
+| `modules/terminal/zellij.nix` | Zellij started from zsh, with a guard against WSL's hidden login session. |
+| `modules/ai/claude-code.nix` | Claude Code. |
+| `modules/packages/` | Package fixes, as overlays (`azure-cli`). |
+| `modules/flake/` | Flake plumbing: systems, `overlays.default`, formatter. |
+| `exemple_profile.nix` | Example of the git-ignored `mainUser.nix`. |
+
+Packages are distributed through overlays: each feature contributes `overlays.<name>`, `overlays.default` composes them, and the host applies it. Packages are adapted with `.override` first, then `.overrideAttrs`, and only built from scratch with `callPackage` when needed.
 
 ---
 
@@ -59,7 +71,7 @@ sudo git clone <repo-url> /etc/nixos
 cd /etc/nixos
 ```
 
-The `opinionated` input points to [`github:pchesneau/NixOs-Opinionated`](https://github.com/pchesneau/NixOs-Opinionated), pinned by the committed `flake.lock`. To work on the modules from a local checkout, override it for a build: `nh os switch -- --override-input opinionated path:/path/to/NixOs-Opinionated`.
+The `nixos-roles` input points to the NixOs-Opinionated modules, pinned by the committed `flake.lock`. To work on the modules from a local checkout, override it for a build: `nh os switch -- --override-input nixos-roles path:/path/to/NixOs-Opinionated`.
 
 ---
 
@@ -73,6 +85,7 @@ The user identity and the optional certificates live next to `flake.nix`, but ar
      username = "<your-username>";
      gitUserName = "Your Name";
      gitUserEmail = "your.email@example.com";
+     # homeDirectory = "/home/<your-username>";  # optional
    }
    ```
 
@@ -134,7 +147,7 @@ sudo nixos-rebuild switch --flake path:/etc/nixos#nixos
 
 ### Updating Flake Inputs
 
-To update all flake inputs (`nixpkgs`, `opinionated` and its own inputs such as `home-manager`, `nixos-wsl`) to their latest versions, then commit the resulting `flake.lock`:
+To update all flake inputs (`nixpkgs`, `nixos-roles` and its own inputs such as `home-manager`, `nixos-wsl`, `catppuccin`, `revim`) to their latest versions, then commit the resulting `flake.lock`:
 
 ```bash
 cd /etc/nixos
@@ -142,6 +155,23 @@ nix flake update
 nh os switch
 git commit flake.lock -m "chore: update flake inputs"
 ```
+
+### Customising
+
+Add a feature as a new file under `modules/`, contributing a module, and import it where it belongs. For instance, a Home Manager feature imported by the main user:
+
+```nix
+# modules/dev/go.nix
+{
+  flake.modules.homeManager.go =
+    { pkgs, ... }:
+    {
+      home.packages = [ pkgs.go pkgs.gopls ];
+    };
+}
+```
+
+then add `go` to the `imports` of `flake.modules.homeManager.main-user` in `modules/users/main-user.nix`. Role options of NixOs-Opinionated (`roles.<role>.*`) are set there too.
 
 ---
 
@@ -157,9 +187,10 @@ git commit flake.lock -m "chore: update flake inputs"
 | `zellij` | `zellij` | Terminal workspace / multiplexer |
 | `fzf` | `fzf` | Interactive fuzzy finder |
 | `nh` | `nh` | Nix CLI companion / helper |
-| `nvim` | LazyVim | Neovim with LazyVim, also reachable as `vi` / `vim` |
+| `nvim` | revim | Neovim from revim, also reachable as `vi` / `vim` |
 | `direnv allow` | `direnv` | Trust the current directory's `.envrc` so it loads on `cd` |
 | `idea` | JetBrains IDEA | Pre-configured with custom JetBrains plugins |
+| `claude` | Claude Code | AI coding assistant |
 
 ---
 
@@ -176,33 +207,15 @@ Entering the directory then loads the project's dev shell automatically, and the
 
 ---
 
-## ✏️ Working with LazyVim
+## ✏️ Working with revim
 
-Neovim is provided by the [`pfassina/lazyvim-nix`](https://github.com/pfassina/lazyvim-nix) Home Manager module (`programs.lazyvim` in `home_base.nix`). Everything LazyVim would normally fetch at runtime is resolved by Nix instead:
+[revim](https://github.com/maximeq95/revim) replaces the LazyVim of the `base` role (both ship `nvim`): Neovim built with nixvim, with yazi and zellij around it. Its package comes from its overlay, its settings from `programs.revim` in `modules/editor/revim.nix`:
 
-- Plugins are injected into `lazy.nvim` as pinned local (`dev`) specs pointing at `/nix/store` paths, so `lazy-lock.json` is never written.
-- Treesitter parsers are prebuilt and linked into Neovim's data directory.
-- `mason.nvim` is disabled, because the prebuilt binaries it downloads cannot run outside an FHS environment. LSP servers, formatters and linters come from `programs.lazyvim.extraPackages` and the enabled extras instead.
+- it follows the Catppuccin flavor of the home;
+- the clipboard goes through `wl-copy` (WSLg), since Windows binaries are kept off the `PATH`;
+- `nixd` completes the NixOS and Home Manager options of the flake being edited, wherever it is cloned.
 
-Consequences:
-
-- `~/.config/nvim` is read-only. Customise Neovim through `programs.lazyvim.config.{options,keymaps,autocmds}` and `programs.lazyvim.plugins` in `home_base.nix`, then rebuild.
-- `:Lazy update` does nothing. Plugins move forward when the `lazyvim` flake input is updated:
-
-  ```bash
-  cd /etc/nixos
-  nix flake update opinionated/lazyvim
-  nh os switch
-  ```
-
-To add a language, enable the matching LazyVim extra in `configuration.nix`, e.g.:
-
-```nix
-home-manager.users.<name>.programs.lazyvim.extras.lang.go = {
-  enable = true;
-  installDependencies = true;   # pull the extra's tools from nixpkgs
-};
-```
+To go back to LazyVim, remove `revim` from the imports of the main user.
 
 ---
 
